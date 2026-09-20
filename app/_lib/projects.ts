@@ -116,3 +116,9 @@ export const thumbnails: Thumbnail[] = projects.map((project) => ({
   size: project.size,
   category: project.category,
 }));
+
+export function projectTitles(category: Category) {
+  return projects
+    .filter((project) => project.category === category)
+    .map((project) => project.title);
+}

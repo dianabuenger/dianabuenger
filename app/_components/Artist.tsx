@@ -1,12 +1,13 @@
 "use client";
 
 import { useRef, useState } from "react";
-import type { Category, Thumbnail } from "../_lib/projects";
+import { categories, type Category, type Thumbnail } from "../_lib/projects";
 import { fullName, site } from "../_lib/site";
 import { useMountEffect } from "../_hooks/useMountEffect";
-import { ArtistControls } from "./ArtistControls";
+import { workHref } from "./ArtistControls";
 import { FeedItem } from "./FeedItem";
 import { Hero } from "./Hero";
+import { SiteHeader } from "./SiteHeader";
 
 const HERO_VIDEO = "/hero.mp4";
 const DOCK_SPAN = 0.55;
@@ -22,10 +23,23 @@ export function Artist({ thumbnails }: ArtistProps) {
   const [category, setCategory] = useState<Category | null>(null);
   const sentinelRef = useRef<HTMLDivElement>(null);
   const headerRef = useRef<HTMLElement>(null);
+  const projectsRef = useRef<HTMLElement>(null);
 
   useMountEffect(() => {
-    const skipIntro = window.matchMedia("(prefers-reduced-motion: reduce)")
-      .matches;
+    const requested = new URLSearchParams(window.location.search).get("work");
+    const linked = categories.find(({ id }) => id === requested)?.id ?? null;
+    if (linked) {
+      setCategory(linked);
+      const projects = projectsRef.current;
+      if (projects) {
+        const top = projects.getBoundingClientRect().top + window.scrollY;
+        window.scrollTo({ top, behavior: "auto" });
+      }
+    }
+
+    const skipIntro =
+      linked !== null ||
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const readyTimer = window.setTimeout(
       () => setIsReady(true),
       skipIntro ? 0 : HEADER_REVEAL_DELAY,
@@ -66,6 +80,7 @@ export function Artist({ thumbnails }: ArtistProps) {
 
   const selectCategory = (next: Category | null) => {
     setCategory(next);
+    window.history.replaceState(null, "", workHref(next));
     if (window.scrollY > window.innerHeight) {
       window.scrollTo({ top: window.innerHeight, behavior: "auto" });
     }
@@ -84,7 +99,7 @@ export function Artist({ thumbnails }: ArtistProps) {
         <section className="Artist-intro container">
           <p className="Artist-intro-text t-statement">{site.intro}</p>
         </section>
-        <section className="Artist-projects container">
+        <section ref={projectsRef} className="Artist-projects container">
           {visibleThumbnails.map((item, index) => (
             <FeedItem key={item.id} item={item} priority={index < 2} />
           ))}
@@ -95,30 +110,13 @@ export function Artist({ thumbnails }: ArtistProps) {
         <p>© {new Date().getFullYear()} {fullName}. All rights reserved.</p>
       </div>
 
-      <div className="Artist-header-rail">
-        <header
-          ref={headerRef}
-          className={`Artist-header${isDocked ? " is-docked" : ""}`}
-        >
-          <h1 className="Artist-header-name t-wordmark">{fullName}</h1>
-          <div className="Artist-header-switch">
-            <p className="Artist-header-tagline t-tagline" aria-hidden={isDocked}>
-              {site.tagline}
-            </p>
-            <ul
-              className="Artist-header-links t-list t-nav"
-              inert={!isDocked}
-              aria-hidden={!isDocked}
-            >
-              <ArtistControls
-                category={category}
-                onSelectCategory={selectCategory}
-                email={site.email}
-              />
-            </ul>
-          </div>
-        </header>
-      </div>
+      <SiteHeader
+        page="work"
+        isDocked={isDocked}
+        headerRef={headerRef}
+        category={category}
+        onSelectCategory={selectCategory}
+      />
     </main>
   );
 }
