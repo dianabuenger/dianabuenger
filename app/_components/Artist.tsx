@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { categories, type Category, type Thumbnail } from "../_lib/projects";
 import { fullName, site } from "../_lib/site";
 import { useMountEffect } from "../_hooks/useMountEffect";
-import { workHref } from "./ArtistControls";
+import { WORK_ALL } from "./ArtistControls";
 import { FeedItem } from "./FeedItem";
 import { Hero } from "./Hero";
 import { SiteHeader } from "./SiteHeader";
@@ -25,20 +25,22 @@ export function Artist({ thumbnails }: ArtistProps) {
   const headerRef = useRef<HTMLElement>(null);
   const projectsRef = useRef<HTMLElement>(null);
 
+  const scrollToWork = () => {
+    const projects = projectsRef.current;
+    if (!projects) return;
+    const top = projects.getBoundingClientRect().top + window.scrollY;
+    window.scrollTo({ top, behavior: "auto" });
+  };
+
   useMountEffect(() => {
     const requested = new URLSearchParams(window.location.search).get("work");
     const linked = categories.find(({ id }) => id === requested)?.id ?? null;
-    if (linked) {
-      setCategory(linked);
-      const projects = projectsRef.current;
-      if (projects) {
-        const top = projects.getBoundingClientRect().top + window.scrollY;
-        window.scrollTo({ top, behavior: "auto" });
-      }
-    }
+    const wantsWork = linked !== null || requested === WORK_ALL;
+    if (linked) setCategory(linked);
+    if (wantsWork) scrollToWork();
 
     const skipIntro =
-      linked !== null ||
+      wantsWork ||
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const readyTimer = window.setTimeout(
       () => setIsReady(true),
@@ -80,10 +82,8 @@ export function Artist({ thumbnails }: ArtistProps) {
 
   const selectCategory = (next: Category | null) => {
     setCategory(next);
-    window.history.replaceState(null, "", workHref(next));
-    if (window.scrollY > window.innerHeight) {
-      window.scrollTo({ top: window.innerHeight, behavior: "auto" });
-    }
+    window.history.replaceState(null, "", next ? `/?work=${next}` : "/");
+    scrollToWork();
   };
 
   const visibleThumbnails = category
@@ -116,6 +116,7 @@ export function Artist({ thumbnails }: ArtistProps) {
         headerRef={headerRef}
         category={category}
         onSelectCategory={selectCategory}
+        onGoToWork={scrollToWork}
       />
     </main>
   );

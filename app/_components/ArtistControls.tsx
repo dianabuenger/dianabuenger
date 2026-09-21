@@ -10,6 +10,7 @@ export type ArtistControlsProps = {
   page: Page;
   category: Category | null;
   onSelectCategory?: (category: Category | null) => void;
+  onGoToWork?: () => void;
   email: string;
 };
 
@@ -18,14 +19,17 @@ type NavItem = {
   node: ReactNode;
 };
 
+export const WORK_ALL = "all";
+
 export function workHref(category: Category | null) {
-  return category ? `/?work=${category}` : "/";
+  return `/?work=${category ?? WORK_ALL}`;
 }
 
 export function ArtistControls({
   page,
   category,
   onSelectCategory,
+  onGoToWork,
   email,
 }: ArtistControlsProps) {
   const [isWorkOpen, setIsWorkOpen] = useState(false);
@@ -75,15 +79,24 @@ export function ArtistControls({
           className={`Artist-nav-group${isOpen ? " is-open" : ""}`}
           onMouseLeave={() => setIsWorkOpen(false)}
         >
-          <button
-            type="button"
-            aria-expanded={isOpen}
-            aria-current={page === "work" ? "page" : undefined}
-            onClick={() => setIsWorkOpen(!isWorkOpen)}
-            className="t-btn t-link--primary t-nav"
-          >
-            Work
-          </button>
+          {onGoToWork ? (
+            <button
+              type="button"
+              aria-expanded={isOpen}
+              aria-current={page === "work" ? "page" : undefined}
+              onClick={() => {
+                setIsWorkOpen(!isWorkOpen);
+                onGoToWork();
+              }}
+              className="t-btn t-link--primary t-nav"
+            >
+              Work
+            </button>
+          ) : (
+            <Link href={workHref(null)} className="t-btn t-link--primary t-nav">
+              Work
+            </Link>
+          )}
           <ul className="Artist-nav-sub t-list">
             {options.map(({ id, label }, index) => (
               <li key={label} style={{ "--sub-index": index } as CSSProperties}>

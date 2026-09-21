@@ -12,6 +12,7 @@ type SiteHeaderProps = {
   headerRef?: Ref<HTMLElement>;
   category?: Category | null;
   onSelectCategory?: (category: Category | null) => void;
+  onGoToWork?: () => void;
 };
 
 export function SiteHeader({
@@ -20,6 +21,7 @@ export function SiteHeader({
   headerRef,
   category = null,
   onSelectCategory,
+  onGoToWork,
 }: SiteHeaderProps) {
   const isHome = page === "work";
 
@@ -51,6 +53,7 @@ export function SiteHeader({
               page={page}
               category={category}
               onSelectCategory={onSelectCategory}
+              onGoToWork={onGoToWork}
               email={site.email}
             />
           </ul>
